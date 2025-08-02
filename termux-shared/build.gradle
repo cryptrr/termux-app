@@ -1,9 +1,18 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
+def termuxProps = new Properties()
+def propsFile = file("${rootDir}/termux-app/gradle.properties")
+
+if (propsFile.exists()) {
+    propsFile.withInputStream { termuxProps.load(it) }
+    print(termuxProps)
+}
+
 android {
-    compileSdkVersion project.properties.compileSdkVersion.toInteger()
-    ndkVersion = System.getenv("JITPACK_NDK_VERSION") ?: project.properties.ndkVersion
+    namespace 'com.termux.shared'
+    compileSdkVersion termuxProps.compileSdkVersion.toInteger()
+    ndkVersion = System.getenv("JITPACK_NDK_VERSION") ?: termuxProps.ndkVersion
 
     dependencies {
         implementation "androidx.appcompat:appcompat:1.3.1"
@@ -11,10 +20,10 @@ android {
         implementation "androidx.core:core:1.6.0"
         implementation "com.google.android.material:material:1.4.0"
         implementation "com.google.guava:guava:24.1-jre"
-        implementation "io.noties.markwon:core:$markwonVersion"
-        implementation "io.noties.markwon:ext-strikethrough:$markwonVersion"
-        implementation "io.noties.markwon:linkify:$markwonVersion"
-        implementation "io.noties.markwon:recycler:$markwonVersion"
+        implementation "io.noties.markwon:core:$termuxProps.markwonVersion"
+        implementation "io.noties.markwon:ext-strikethrough:$termuxProps.markwonVersion"
+        implementation "io.noties.markwon:linkify:$termuxProps.markwonVersion"
+        implementation "io.noties.markwon:recycler:$termuxProps.markwonVersion"
         implementation "org.lsposed.hiddenapibypass:hiddenapibypass:6.1"
 
         // Do not increment version higher than 1.0.0-alpha09 since it will break ViewUtils and needs to be looked into
@@ -32,8 +41,8 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion project.properties.minSdkVersion.toInteger()
-        targetSdkVersion project.properties.targetSdkVersion.toInteger()
+        minSdkVersion termuxProps.minSdkVersion.toInteger()
+        targetSdkVersion termuxProps.targetSdkVersion.toInteger()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             ndkBuild {
@@ -67,25 +76,26 @@ dependencies {
     testImplementation "junit:junit:4.13.2"
     androidTestImplementation "androidx.test.ext:junit:1.1.3"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.4.0"
+    //noinspection CoreLibDesugaringV1
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
 }
 
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    classifier "sources"
+    archiveClassifier.set("sources")
 }
 
 afterEvaluate {
-    publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                from components.release
-                groupId = 'com.termux'
-                artifactId = 'termux-shared'
-                version = '0.118.0'
-                artifact(sourceJar)
-            }
-        }
-    }
+//    publishing {
+//        publications {
+//            // Creates a Maven publication called "release".
+//            release(MavenPublication) {
+//                from components.release
+//                groupId = 'com.termux'
+//                artifactId = 'termux-shared'
+//                version = '0.118.0'
+//                artifact(sourceJar)
+//            }
+//        }
+//    }
 }

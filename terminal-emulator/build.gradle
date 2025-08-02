@@ -1,13 +1,22 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
+def termuxProps = new Properties()
+def propsFile = file("${rootDir}/termux-app/gradle.properties")
+
+if (propsFile.exists()) {
+    propsFile.withInputStream { termuxProps.load(it) }
+    print(termuxProps)
+}
+
 android {
-    compileSdkVersion project.properties.compileSdkVersion.toInteger()
-    ndkVersion = System.getenv("JITPACK_NDK_VERSION") ?: project.properties.ndkVersion
+    namespace 'com.termux.terminal'
+    compileSdkVersion termuxProps.compileSdkVersion.toInteger()
+    ndkVersion = System.getenv("JITPACK_NDK_VERSION") ?: termuxProps.ndkVersion
 
     defaultConfig {
-        minSdkVersion project.properties.minSdkVersion.toInteger()
-        targetSdkVersion project.properties.targetSdkVersion.toInteger()
+        minSdkVersion termuxProps.minSdkVersion.toInteger()
+        targetSdkVersion termuxProps.targetSdkVersion.toInteger()
 
         externalNativeBuild {
             ndkBuild {
@@ -56,20 +65,20 @@ dependencies {
 
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    classifier "sources"
+    archiveClassifier.set("sources")
 }
 
 afterEvaluate {
-    publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                from components.release
-                groupId = 'com.termux'
-                artifactId = 'terminal-emulator'
-                version = '0.118.0'
-                artifact(sourceJar)
-            }
-        }
-    }
+//    publishing {
+//        publications {
+//            // Creates a Maven publication called "release".
+//            release(MavenPublication) {
+//                from components.release
+//                groupId = 'com.termux'
+//                artifactId = 'terminal-emulator'
+//                version = '0.118.0'
+//                artifact(sourceJar)
+//            }
+//        }
+//    }
 }

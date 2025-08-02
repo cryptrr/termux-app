@@ -2,6 +2,15 @@ plugins {
     id "com.android.application"
 }
 
+def termuxProps = new Properties()
+def propsFile = file("${rootDir}/termux-app/gradle.properties")
+
+if (propsFile.exists()) {
+    propsFile.withInputStream { termuxProps.load(it) }
+    print(termuxProps)
+}
+
+
 ext {
     // The packageVariant defines the bootstrap variant that will be included in the app APK.
     // This must be supported by com.termux.shared.termux.TermuxBootstrap.PackageVariant or app will
@@ -13,8 +22,11 @@ ext {
 }
 
 android {
-    compileSdkVersion project.properties.compileSdkVersion.toInteger()
-    ndkVersion = System.getenv("JITPACK_NDK_VERSION") ?: project.properties.ndkVersion
+
+    namespace 'com.termux'
+
+    compileSdkVersion termuxProps.compileSdkVersion.toInteger()
+    ndkVersion = System.getenv("JITPACK_NDK_VERSION") ?: termuxProps.ndkVersion
     def appVersionName = System.getenv("TERMUX_APP_VERSION_NAME") ?: ""
     def apkVersionTag = System.getenv("TERMUX_APK_VERSION_TAG") ?: ""
     def splitAPKsForDebugBuilds = System.getenv("TERMUX_SPLIT_APKS_FOR_DEBUG_BUILDS") ?: "1"
@@ -28,21 +40,23 @@ android {
         implementation "androidx.viewpager:viewpager:1.0.0"
         implementation "com.google.android.material:material:1.4.0"
         implementation "com.google.guava:guava:24.1-jre"
-        implementation "io.noties.markwon:core:$markwonVersion"
-        implementation "io.noties.markwon:ext-strikethrough:$markwonVersion"
-        implementation "io.noties.markwon:linkify:$markwonVersion"
-        implementation "io.noties.markwon:recycler:$markwonVersion"
+        implementation "io.noties.markwon:core:$termuxProps.markwonVersion"
+        implementation "io.noties.markwon:ext-strikethrough:$termuxProps.markwonVersion"
+        implementation "io.noties.markwon:linkify:$termuxProps.markwonVersion"
+        implementation "io.noties.markwon:recycler:$termuxProps.markwonVersion"
 
         implementation project(":terminal-view")
-        implementation project(":termux-shared")
+        //implementation project(":termux-shared")
     }
 
     defaultConfig {
         applicationId "com.termux"
-        minSdkVersion project.properties.minSdkVersion.toInteger()
-        targetSdkVersion project.properties.targetSdkVersion.toInteger()
+        minSdkVersion termuxProps.minSdkVersion.toInteger()
+        targetSdkVersion termuxProps.targetSdkVersion.toInteger()
         versionCode 118
         versionName "0.118.0"
+
+        android.buildFeatures.buildConfig = true
 
         if (appVersionName) versionName = appVersionName
         validateVersionName(versionName)
@@ -143,6 +157,7 @@ android {
 dependencies {
     testImplementation "junit:junit:4.13.2"
     testImplementation "org.robolectric:robolectric:4.10"
+    //noinspection CoreLibDesugaringV1
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
 }
 
